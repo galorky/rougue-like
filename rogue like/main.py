@@ -3,7 +3,7 @@ import pygame,math,random,map_maker,maze_vizualiser
 img_kresh = pygame.transform.scale(pygame.image.load('shrek.png'),(50,80))
 img_kresh.set_colorkey((255,255,255))
 
-xfen,yfen = 800,800
+xfen,yfen = 1600,900
 dimx,dimy = 6,6
 multix,multiy = xfen/dimx , yfen/dimy
 
@@ -11,48 +11,97 @@ maze = maze_vizualiser.show(dimx,dimy)
 
 pygame.init()
 
-fen = pygame.display.set_mode((xfen,yfen))
+fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)
 
 class Joueur:
     def __init__(self):
-        self.speed = 5
+        self.speed = 8
         self.x = xfen/2 - img_kresh.get_width()/2
         self.y = yfen/2 - img_kresh.get_height()/2
+        self.dx,self.dy = 0,0
 
     def move(self):
+        global loc
         keys = pygame.key.get_pressed()
 
-        if not (keys[pygame.K_z] and keys[pygame.K_d] and keys[pygame.K_s] and keys[pygame.K_q]):
+        if not (keys[pygame.K_z] and keys[pygame.K_d] and keys[pygame.K_s] and keys[pygame.K_q]): #presse toutes les touches = pas bouger
 
-            if keys[pygame.K_z] and keys[pygame.K_d]:
-                self.x += self.speed *  math.sqrt(2) / 2
-                self.y -= self.speed * math.sqrt(2) / 2
+            if sum(keys[i] for i in [pygame.K_q, pygame.K_d, pygame.K_z, pygame.K_s]) == 1: #presse que une touche parmi zqsd
 
-            elif keys[pygame.K_z] and keys[pygame.K_q]:
-                self.x -= self.speed * math.sqrt(2) / 2
-                self.y -= self.speed * math.sqrt(2) / 2
+                if keys[pygame.K_z] and not keys[pygame.K_d] and not keys[pygame.K_s] and not keys[pygame.K_q]:
+                    self.y -= self.speed
+                    self.dy = -self.speed
+                    self.dx = 0
 
-            elif keys[pygame.K_s] and keys[pygame.K_d]:
-                self.x += self.speed * math.sqrt(2) / 2
-                self.y += self.speed * math.sqrt(2) / 2
+                elif not keys[pygame.K_z] and keys[pygame.K_d] and not keys[pygame.K_s] and not keys[pygame.K_q]:
+                    self.x += self.speed
+                    self.dx = self.speed
+                    self.dy = 0
 
-            elif keys[pygame.K_s] and keys[pygame.K_q]:
-                self.x -= self.speed * math.sqrt(2) / 2
-                self.y += self.speed * math.sqrt(2) / 2
+                elif not keys[pygame.K_z] and not keys[pygame.K_d] and keys[pygame.K_s] and not keys[pygame.K_q]:
+                    self.y += self.speed
+                    self.dy = self.speed
+                    self.dx = 0
 
-            if keys[pygame.K_z] and not keys[pygame.K_d] and not keys[pygame.K_s] and not keys[pygame.K_q]:
-                self.y -= self.speed
+                elif not keys[pygame.K_z] and not keys[pygame.K_d] and not keys[pygame.K_s] and keys[pygame.K_q]:
+                    self.x -= self.speed
+                    self.dx = -self.speed
+                    self.dy = 0
 
-            elif not keys[pygame.K_z] and keys[pygame.K_d] and not keys[pygame.K_s] and not keys[pygame.K_q]:
-                self.x += self.speed
 
-            elif not keys[pygame.K_z] and not keys[pygame.K_d] and keys[pygame.K_s] and not keys[pygame.K_q]:
-                self.y += self.speed
+            else:
+                if keys[pygame.K_z] and keys[pygame.K_d]:
+                    self.x += self.speed * math.sqrt(2) / 2
+                    self.y -= self.speed * math.sqrt(2) / 2
+                    self.dx,self.dy = self.speed * math.sqrt(2) / 2 , -self.speed * math.sqrt(2) / 2
 
-            elif not keys[pygame.K_z] and not keys[pygame.K_d] and not keys[pygame.K_s] and keys[pygame.K_q]:
-                self.x -= self.speed
+                elif keys[pygame.K_z] and keys[pygame.K_q]:
+                    self.x -= self.speed * math.sqrt(2) / 2
+                    self.y -= self.speed * math.sqrt(2) / 2
+                    self.dx,self.dy = -self.speed * math.sqrt(2) / 2, -self.speed * math.sqrt(2) / 2
+
+                elif keys[pygame.K_s] and keys[pygame.K_d]:
+                    self.x += self.speed * math.sqrt(2) / 2
+                    self.y += self.speed * math.sqrt(2) / 2
+                    self.dx,self.dy = self.speed * math.sqrt(2) / 2, self.speed * math.sqrt(2) / 2
+
+
+                elif keys[pygame.K_s] and keys[pygame.K_q]:
+                    self.x -= self.speed * math.sqrt(2) / 2
+                    self.y += self.speed * math.sqrt(2) / 2
+                    self.dx,self.dy = -self.speed * math.sqrt(2) / 2,self.speed * math.sqrt(2) / 2
+
+            if self.x > xfen - 15 - img_kresh.get_width() and not (loc[0]+1,loc[1]) in maze[loc][0]:
+                self.x -= self.dx
+            elif self.x > xfen - img_kresh.get_width() and (loc[0]+1,loc[1]) in maze[loc][0]:
+                loc = (loc[0]+1,loc[1])
+                self.x = 20
+
+            if self.y > yfen - 15 - img_kresh.get_height() and not (loc[0],loc[1]+1) in maze[loc][0]:
+                self.y -= self.dy
+            elif self.y > yfen - img_kresh.get_height() and (loc[0],loc[1]+1) in maze[loc][0]:
+                loc = (loc[0],loc[1]+1)
+                self.y = 20
+
+            if self.y < 15  and not (loc[0],loc[1]-1) in maze[loc][0]:
+                self.y -= self.dy
+            elif self.y < 0 and (loc[0],loc[1]-1) in maze[loc][0]:
+                loc = (loc[0],loc[1]-1)
+                self.y = yfen - 20 - img_kresh.get_height()
+
+            if self.x < 15  and not (loc[0]-1,loc[1]) in maze[loc][0]:
+                self.x -= self.dx
+            elif self.x < 0 and (loc[0]-1,loc[1]) in maze[loc][0]:
+                loc = (loc[0]-1,loc[1])
+                self.x = xfen - 20 - img_kresh.get_width()
+
+
+
+
+
+
+
         fen.blit(img_kresh, (self.x,self.y))
-
 
 
 class Ennemy:
@@ -77,15 +126,13 @@ class Ennemy:
 
 
 
-spawn = None
+
 
 def spawner(maze):
-    global spawn
-
     spawn_x = random.randint(0,dimx-1)
     spawn_y = random.randint(0,dimy-1)
     if len(maze[(spawn_x,spawn_y)][0]) > 0:
-        spawn = (spawn_x,spawn_y)
+        return (spawn_x,spawn_y)
     else:
         spawner(maze)
 
@@ -116,10 +163,9 @@ def afficher_mur(maze,loc):
 
 kresh = Joueur()
 
-spawner(maze)
-
-loc = spawn
+spawn = spawner(maze)
 print(spawn)
+loc = spawn
 
 
 

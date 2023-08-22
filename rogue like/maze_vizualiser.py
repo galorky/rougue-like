@@ -4,11 +4,11 @@ pygame.init()
 def show(dimx,dimy):
     xfen,yfen = 1920,1080
     multix,multiy = xfen/dimx,yfen/dimy
-
+    maze = map_maker.generate(dimx,dimy)
+    return maze
 
     fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)
 
-    maze = map_maker.generate(dimx,dimy)
 
     for i in maze:
         for o in maze[i][0]:

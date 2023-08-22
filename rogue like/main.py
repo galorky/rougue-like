@@ -6,6 +6,9 @@ img_kresh.set_colorkey((255,255,255))
 img_ennemie = pygame.transform.scale(pygame.image.load('ennemie.png'),(50,80))
 img_ennemie.set_colorkey((255,255,255))
 
+img_ennemie_shooter = pygame.transform.scale(pygame.image.load('ennemie_shooter.png'),(70,80))
+img_ennemie_shooter.set_colorkey((255,255,255))
+
 xfen,yfen = 1600,900
 dimx,dimy = 6,6
 multix,multiy = xfen/dimx , yfen/dimy
@@ -74,7 +77,7 @@ class Joueur:
                     self.y += self.speed * math.sqrt(2) / 2
                     self.dx,self.dy = -self.speed * math.sqrt(2) / 2,self.speed * math.sqrt(2) / 2
 
-            if self.x > xfen - 15 - img_kresh.get_width() and not (loc[0]+1,loc[1]) in maze[loc][0] and len(maze[loc][1]) > 0:
+            if self.x > xfen - 15 - img_kresh.get_width() and (loc[0]+1,loc[1]) in maze[loc][0] and len(maze[loc][1]) > 0:
                 self.x -= self.dx
             if self.x > xfen - 15 - img_kresh.get_width() and not (loc[0]+1,loc[1]) in maze[loc][0]:
                 self.x -= self.dx
@@ -84,7 +87,7 @@ class Joueur:
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
 
-            if self.y > yfen - 15 - img_kresh.get_height() and not (loc[0],loc[1]+1) in maze[loc][0]and len(maze[loc][1]) > 0:
+            if self.y > yfen - 15 - img_kresh.get_height() and  (loc[0],loc[1]+1) in maze[loc][0]and len(maze[loc][1]) > 0:
                 self.y -= self.dy
             elif self.y > yfen - 15 - img_kresh.get_height() and not (loc[0],loc[1]+1) in maze[loc][0]:
                 self.y -= self.dy
@@ -94,7 +97,7 @@ class Joueur:
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
 
-            if self.y < 15  and not (loc[0],loc[1]-1) in maze[loc][0] and len(maze[loc][1]) > 0:
+            if self.y < 15  and (loc[0],loc[1]-1) in maze[loc][0] and len(maze[loc][1]) > 0:
                 self.y -= self.dy
             elif self.y < 15  and not (loc[0],loc[1]-1) in maze[loc][0]:
                 self.y -= self.dy
@@ -120,14 +123,40 @@ class Joueur:
 
 class Ennemy:
     def __init__(self, joueur):
-        self.x = random.randint(80, xfen - 100)
-        self.y = random.randint(80, xfen - 100)
-        self.speed = random.randint(1, 3)
-        self.clock = 0  # frame checker
-        self.moveclock = random.randint(20, 30)  # moves on the x frame then reset
-        self.ennemie_races = ['alien']
-        self.race = random.choice(self.ennemie_races)
+        self.tirage = []
+        for i in range(70):
+            self.tirage.append('débile')
+        for i in range(30):
+            self.tirage.append('shooter')
+
+        self.race = random.choice(self.tirage)
         self.joueur = joueur
+        self.attribution_stats()
+        self.face=True
+
+    def attribution_stats(self):
+        if self.race == 'débile':
+            self.image = img_ennemie
+            self.image.set_colorkey((255,255,255))
+            self.x = random.randint(160, xfen - 160)
+            self.y = random.randint(160, yfen - 160)
+            self.speed = random.randint(10, 14)
+            self.clock = 0  # frame checker
+            self.moveclock = random.randint(8, 15)
+            self.image_fliped = pygame.transform.flip(self.image,True,False)
+            self.image_fliped.set_colorkey((255,255,255))
+
+        elif self.race == 'shooter':
+            self.image = img_ennemie_shooter
+            self.image.set_colorkey((255,255,255))
+            self.x = random.randint(500, xfen - 500)
+            self.y = random.randint(400, yfen - 400)
+            self.speed = random.randint(1, 6)
+            self.clock = 0  # frame checker
+            self.moveclock = random.randint(10, 19)
+            self.image_fliped = pygame.transform.flip(self.image,True,False)
+            self.image_fliped.set_colorkey((255,255,255))
+
 
     def move(self):
         if self.clock >= self.moveclock:
@@ -139,7 +168,12 @@ class Ennemy:
             self.y += math.sin(angle) * self.speed
         else:
             self.clock += 1
-        fen.blit(img_ennemie,(self.x,self.y))
+
+        if self.joueur.x - self.x > 0:
+            fen.blit(self.image,(self.x,self.y))
+        else:
+            fen.blit(self.image_fliped,(self.x,self.y))
+
 
 
 def spawner(maze):
@@ -184,7 +218,7 @@ def afficher_mur(maze,loc):
 
 def spawn_ennemies(visited,maze,loc):
     if not loc in visited:
-        for _ in range(random.randint(3,7)):
+        for _ in range(random.randint(15,20)):
             maze[loc][1].append(Ennemy(kresh))
 
 kresh = Joueur()

@@ -25,20 +25,20 @@ class Joueur:
         if not (keys[pygame.K_z] and keys[pygame.K_d] and keys[pygame.K_s] and keys[pygame.K_q]):
 
             if keys[pygame.K_z] and keys[pygame.K_d]:
-                self.x += self.speed * 2 * math.sqrt(2)
-                self.y -= self.speed * 2 * math.sqrt(2)
+                self.x += self.speed *  math.sqrt(2) / 2
+                self.y -= self.speed * math.sqrt(2) / 2
 
             elif keys[pygame.K_z] and keys[pygame.K_q]:
-                self.x -= self.speed * 2 * math.sqrt(2)
-                self.y -= self.speed * 2 * math.sqrt(2)
+                self.x -= self.speed * math.sqrt(2) / 2
+                self.y -= self.speed * math.sqrt(2) / 2
 
             elif keys[pygame.K_s] and keys[pygame.K_d]:
-                self.x += self.speed * 2 * math.sqrt(2)
-                self.y += self.speed * 2 * math.sqrt(2)
+                self.x += self.speed * math.sqrt(2) / 2
+                self.y += self.speed * math.sqrt(2) / 2
 
             elif keys[pygame.K_s] and keys[pygame.K_q]:
-                self.x -= self.speed * 2 * math.sqrt(2)
-                self.y += self.speed * 2 * math.sqrt(2)
+                self.x -= self.speed * math.sqrt(2) / 2
+                self.y += self.speed * math.sqrt(2) / 2
 
             if keys[pygame.K_z] and not keys[pygame.K_d] and not keys[pygame.K_s] and not keys[pygame.K_q]:
                 self.y -= self.speed

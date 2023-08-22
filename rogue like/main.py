@@ -3,6 +3,9 @@ import pygame,math,random,map_maker,maze_vizualiser
 img_kresh = pygame.transform.scale(pygame.image.load('shrek.png'),(50,80))
 img_kresh.set_colorkey((255,255,255))
 
+img_ennemie = pygame.transform.scale(pygame.image.load('ennemie.png'),(50,80))
+img_ennemie.set_colorkey((255,255,255))
+
 xfen,yfen = 1600,900
 dimx,dimy = 6,6
 multix,multiy = xfen/dimx , yfen/dimy
@@ -71,35 +74,46 @@ class Joueur:
                     self.y += self.speed * math.sqrt(2) / 2
                     self.dx,self.dy = -self.speed * math.sqrt(2) / 2,self.speed * math.sqrt(2) / 2
 
+            if self.x > xfen - 15 - img_kresh.get_width() and not (loc[0]+1,loc[1]) in maze[loc][0] and len(maze[loc][1]) > 0:
+                self.x -= self.dx
             if self.x > xfen - 15 - img_kresh.get_width() and not (loc[0]+1,loc[1]) in maze[loc][0]:
                 self.x -= self.dx
             elif self.x > xfen - img_kresh.get_width() and (loc[0]+1,loc[1]) in maze[loc][0]:
                 loc = (loc[0]+1,loc[1])
                 self.x = 20
+                spawn_ennemies(visited,maze,loc)
+                visited.append(loc)
 
-            if self.y > yfen - 15 - img_kresh.get_height() and not (loc[0],loc[1]+1) in maze[loc][0]:
+            if self.y > yfen - 15 - img_kresh.get_height() and not (loc[0],loc[1]+1) in maze[loc][0]and len(maze[loc][1]) > 0:
+                self.y -= self.dy
+            elif self.y > yfen - 15 - img_kresh.get_height() and not (loc[0],loc[1]+1) in maze[loc][0]:
                 self.y -= self.dy
             elif self.y > yfen - img_kresh.get_height() and (loc[0],loc[1]+1) in maze[loc][0]:
                 loc = (loc[0],loc[1]+1)
                 self.y = 20
+                spawn_ennemies(visited,maze,loc)
+                visited.append(loc)
 
-            if self.y < 15  and not (loc[0],loc[1]-1) in maze[loc][0]:
+            if self.y < 15  and not (loc[0],loc[1]-1) in maze[loc][0] and len(maze[loc][1]) > 0:
+                self.y -= self.dy
+            elif self.y < 15  and not (loc[0],loc[1]-1) in maze[loc][0]:
                 self.y -= self.dy
             elif self.y < 0 and (loc[0],loc[1]-1) in maze[loc][0]:
                 loc = (loc[0],loc[1]-1)
                 self.y = yfen - 20 - img_kresh.get_height()
+                spawn_ennemies(visited,maze,loc)
+                visited.append(loc)
 
-            if self.x < 15  and not (loc[0]-1,loc[1]) in maze[loc][0]:
+            if self.x < 15  and (loc[0]-1,loc[1]) in maze[loc][0] and len(maze[loc][1]) > 0:
+                self.x -= self.dx
+            elif self.x < 15  and not (loc[0]-1,loc[1]) in maze[loc][0] :
                 self.x -= self.dx
             elif self.x < 0 and (loc[0]-1,loc[1]) in maze[loc][0]:
                 loc = (loc[0]-1,loc[1])
+
                 self.x = xfen - 20 - img_kresh.get_width()
-
-
-
-
-
-
+                spawn_ennemies(visited,maze,loc)
+                visited.append(loc)
 
         fen.blit(img_kresh, (self.x,self.y))
 
@@ -123,9 +137,9 @@ class Ennemy:
             print(angle)
             self.x += math.cos(angle) * self.speed
             self.y += math.sin(angle) * self.speed
-
-
-
+        else:
+            self.clock += 1
+        fen.blit(img_ennemie,(self.x,self.y))
 
 
 def spawner(maze):
@@ -148,6 +162,12 @@ def afficher_mur(maze,loc):
     pygame.draw.circle(fen,(200,80,50),(xfen,yfen),15)
 
 
+    if len(maze[loc][1]) > 0:
+        pygame.draw.line(fen,(200,150,150),(xfen,0),(xfen,yfen),30)
+        pygame.draw.line(fen,(200,150,150),(0,0),(0,yfen),30)
+        pygame.draw.line(fen,(200,150,150),(0,0),(xfen,0),30)
+        pygame.draw.line(fen,(200,150,150),(0,yfen),(xfen,yfen),30)
+
     if not (loc[0]+1,loc[1]) in maze[loc][0]:
         pygame.draw.line(fen,(200,80,50),(xfen,0),(xfen,yfen),30)
 
@@ -161,10 +181,20 @@ def afficher_mur(maze,loc):
         pygame.draw.line(fen,(200,80,50),(0,yfen),(xfen,yfen),30)
 
 
+
+def spawn_ennemies(visited,maze,loc):
+    if not loc in visited:
+        for _ in range(random.randint(3,7)):
+            maze[loc][1].append(Ennemy(kresh))
+
 kresh = Joueur()
 
 spawn = spawner(maze)
 print(spawn)
+
+visited = [spawn]
+
+
 loc = spawn
 
 
@@ -180,7 +210,9 @@ while run:
 
 
     kresh.move()
-
+    if len(maze[loc][1]) > 0:
+        for ennemi in maze[loc][1]:
+            ennemi.move()
 
     pygame.display.update()
     for event in pygame.event.get():

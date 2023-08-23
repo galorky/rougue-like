@@ -1,22 +1,26 @@
 import pygame,math,random,map_maker,maze_vizualiser
 from image_loader import*
 
-xfen,yfen = 1600,900
+xfen,yfen = 800,800
 dimx,dimy = 6,6
 multix,multiy = xfen/dimx , yfen/dimy
 
 maze = maze_vizualiser.show(dimx,dimy)
-
 pygame.init()
-
-fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)
-
+fen = pygame.display.set_mode((xfen,yfen))#,pygame.FULLSCREEN
 
 
+class Spell:
+    def __init__(self,name,x,y):
+        self.name = name
+        self.x = x
+        self.y = y
 
+        if self.name == 'lazer_r':
+            lazzer('droite')
 
-
-
+    def lazer(self,dirrection):
+        print(dirrection)
 
 class Joueur:
     def __init__(self):
@@ -29,6 +33,41 @@ class Joueur:
         self.vie = 6
         self.imunite = 60
         self.counter_imunite = 60
+        self.combo = []
+        self.patience = 10
+        self.spells = []
+        self.spell_table = {
+                            ('droite','droite','droite'):'lazer_r',
+                            ('gauche','gauche','gauche'):'lazer_l',
+                            ('bas','bas','bas'):'lazer_d',
+                            ('haut','haut','haut'):'lazer_u'
+                           }
+
+    def attack(self):
+        print(self.combo)
+        keys = pygame.key.get_pressed()
+        if self.patience >= 10:
+            if keys[pygame.K_UP]:
+                self.combo += 'haut'
+            elif keys[pygame.K_DOWN]:
+                self.combo += 'bas'
+            elif keys[pygame.K_LEFT]:
+                self.combo += 'gauche'
+            elif keys[pygame.K_RIGHT]:
+                self.combo += 'droite'
+            self.patience = 0
+        else:
+            self.patience += 1
+
+        if keys[pygame.K_SPACE]:
+            if tuple(self.combo) in self.spell_table:
+                self.spells.append(Spell(self.spell_table[tuple(self.combo)]),self.x+self.image.get_width()/2,self.y+self.image.get_height()/2)
+            else:
+                print('there is no combo like this')
+            self.combo = []
+
+
+
 
     def move(self):
         global loc
@@ -201,7 +240,6 @@ class Ennemy:
         if self.clock >= self.moveclock:
             self.clock = 0
             hypothenuse = math.sqrt((self.joueur.y - self.y)**2 + (self.joueur.x - self.x)**2)
-            print(hypothenuse)
 
             if hypothenuse > 60 and self.race == 'débile':
                 angle = math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)
@@ -233,7 +271,7 @@ class Ennemy:
 
                 dx = math.cos(math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)) * self.shot_speed
                 dy = math.sin(math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)) * self.shot_speed
-                self.bullets.append(Ennemy_shot(self.x,self.y,dx,dy))
+                self.bullets.append(Ennemy_shot(self.x+self.image.get_width()/2,self.y+self.image.get_height()/2,dx,dy))
 
             else:
                 self.attack_clock += 1
@@ -294,7 +332,7 @@ def afficher_mur(maze,loc):
 
 def afficher_hearth(vie):
     global hearth,hearth_holder
-    hearth_holder = pygame.transform.scale(pygame.image.load('hearth_holder.png'),(pygame.image.load('hearth_holder.png').get_width()*2,pygame.image.load('hearth_holder.png').get_height()*2))
+    hearth_holder = pygame.transform.scale(pygame.image.load('images/hearth_holder.png'),(pygame.image.load('images/hearth_holder.png').get_width()*2,pygame.image.load('images/hearth_holder.png').get_height()*2))
     hearth_holder.set_colorkey((255,255,255))
     if vie > 5:
         hearth_holder = pygame.transform.scale(hearth_holder,(hearth_holder.get_width() + (vie-5) * hearth.get_width() + 2*(vie-5),hearth_holder.get_height()))
@@ -332,6 +370,7 @@ while run:
 
     kresh.move()
     kresh.colision(maze[loc][1])
+    kresh.attack()
     if len(maze[loc][1]) > 0:
         for ennemi in maze[loc][1]:
             ennemi.move()
@@ -345,13 +384,10 @@ while run:
             if event.key == pygame.K_ESCAPE:
                 run = False
 
-
+if run1:
+    fen.blit(img_lost,(0,0))
 while run1:
     clock.tick(60)
-
-    fen.blit(img_lost,(0,0))
-
-
     pygame.display.update()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

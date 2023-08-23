@@ -1,4 +1,5 @@
 import pygame,math,random,map_maker,maze_vizualiser
+from image_loader import*
 
 xfen,yfen = 1600,900
 dimx,dimy = 6,6
@@ -11,25 +12,7 @@ pygame.init()
 fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)
 
 
-img_lost = pygame.transform.scale(pygame.image.load('lost.png'),(xfen,yfen))
 
-img_kresh = pygame.transform.scale(pygame.image.load('shrek.png'),(50,80))
-img_kresh.set_colorkey((255,255,255))
-
-img_kresh_aie = pygame.transform.scale(pygame.image.load('shrek_aie.png'),(50,80))
-img_kresh_aie.set_colorkey((255,255,255))
-
-img_ennemie = pygame.transform.scale(pygame.image.load('ennemie.png'),(50,80))
-img_ennemie.set_colorkey((255,255,255))
-
-img_ennemie_shooter = pygame.transform.scale(pygame.image.load('ennemie_shooter.png'),(70,80))
-img_ennemie_shooter.set_colorkey((255,255,255))
-
-hearth = pygame.transform.scale(pygame.image.load('hearth.png'),(pygame.image.load('hearth.png').get_width()*2,pygame.image.load('hearth.png').get_height()*2))
-hearth.set_colorkey((255,255,255))
-
-hearth_holder = pygame.transform.scale(pygame.image.load('hearth_holder.png'),(pygame.image.load('hearth_holder.png').get_width()*2,pygame.image.load('hearth_holder.png').get_height()*2))
-hearth_holder.set_colorkey((255,255,255))
 
 
 
@@ -358,11 +341,9 @@ while run:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-            pygame.quit()
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 run = False
-                pygame.quit()
 
 
 while run1:
@@ -380,3 +361,4 @@ while run1:
             if event.key == pygame.K_ESCAPE:
                 run1 = False
                 pygame.quit()
+pygame.quit()

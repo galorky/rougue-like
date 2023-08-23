@@ -1,14 +1,5 @@
 import pygame,math,random,map_maker,maze_vizualiser
 
-img_kresh = pygame.transform.scale(pygame.image.load('shrek.png'),(50,80))
-img_kresh.set_colorkey((255,255,255))
-
-img_ennemie = pygame.transform.scale(pygame.image.load('ennemie.png'),(50,80))
-img_ennemie.set_colorkey((255,255,255))
-
-img_ennemie_shooter = pygame.transform.scale(pygame.image.load('ennemie_shooter.png'),(70,80))
-img_ennemie_shooter.set_colorkey((255,255,255))
-
 xfen,yfen = 1600,900
 dimx,dimy = 6,6
 multix,multiy = xfen/dimx , yfen/dimy
@@ -19,12 +10,42 @@ pygame.init()
 
 fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)
 
+
+img_lost = pygame.transform.scale(pygame.image.load('lost.png'),(xfen,yfen))
+
+img_kresh = pygame.transform.scale(pygame.image.load('shrek.png'),(50,80))
+img_kresh.set_colorkey((255,255,255))
+
+img_kresh_aie = pygame.transform.scale(pygame.image.load('shrek_aie.png'),(50,80))
+img_kresh_aie.set_colorkey((255,255,255))
+
+img_ennemie = pygame.transform.scale(pygame.image.load('ennemie.png'),(50,80))
+img_ennemie.set_colorkey((255,255,255))
+
+img_ennemie_shooter = pygame.transform.scale(pygame.image.load('ennemie_shooter.png'),(70,80))
+img_ennemie_shooter.set_colorkey((255,255,255))
+
+hearth = pygame.transform.scale(pygame.image.load('hearth.png'),(pygame.image.load('hearth.png').get_width()*2,pygame.image.load('hearth.png').get_height()*2))
+hearth.set_colorkey((255,255,255))
+
+hearth_holder = pygame.transform.scale(pygame.image.load('hearth_holder.png'),(pygame.image.load('hearth_holder.png').get_width()*2,pygame.image.load('hearth_holder.png').get_height()*2))
+hearth_holder.set_colorkey((255,255,255))
+
+
+
+
+
 class Joueur:
     def __init__(self):
         self.speed = 8
         self.x = xfen/2 - img_kresh.get_width()/2
         self.y = yfen/2 - img_kresh.get_height()/2
         self.dx,self.dy = 0,0
+        self.image = img_kresh_aie
+        self.rect = pygame.Rect(self.x,self.y,self.image.get_width(),self.image.get_height())
+        self.vie = 6
+        self.imunite = 60
+        self.counter_imunite = 60
 
     def move(self):
         global loc
@@ -118,7 +139,35 @@ class Joueur:
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
 
-        fen.blit(img_kresh, (self.x,self.y))
+        self.rect = pygame.Rect(self.x,self.y,self.image.get_width(),self.image.get_height())
+        fen.blit(self.image, (self.x,self.y))
+
+    def colision(self,ennemies):
+        global run,run1
+        for ennemie in ennemies:
+            if ennemie.rect.colliderect(self.rect):
+                if self.counter_imunite >= self.imunite:
+                    self.vie += 1
+                    self.counter_imunite = 0
+
+            if ennemie.race == 'shooter':
+                for bullet in ennemie.bullets:
+                    if bullet.rect.colliderect(self.rect):
+                        if self.counter_imunite >= self.imunite:
+                            self.vie -= 1
+                            self.counter_imunite = 0
+
+        if self.counter_imunite < self.imunite:
+            self.image = img_kresh_aie
+        else:
+            self.image = img_kresh
+
+        self.counter_imunite += 1
+
+        if self.vie < 1:
+            run = False
+            run1 = True
+
 
 
 class Ennemy:
@@ -145,6 +194,7 @@ class Ennemy:
             self.moveclock = random.randint(8, 15)
             self.image_fliped = pygame.transform.flip(self.image,True,False)
             self.image_fliped.set_colorkey((255,255,255))
+            self.rect = pygame.Rect(self.x,self.y,self.image.get_width(),self.image.get_height())
 
         elif self.race == 'shooter':
             self.bullets = []
@@ -160,16 +210,24 @@ class Ennemy:
             self.moveclock = random.randint(10, 19)
             self.image_fliped = pygame.transform.flip(self.image,True,False)
             self.image_fliped.set_colorkey((255,255,255))
+            self.rect = pygame.Rect(self.x,self.y,self.image.get_width(),self.image.get_height())
 
 
     def move(self):
         if self.clock >= self.moveclock:
             self.clock = 0
+            hypothenuse = math.sqrt((self.joueur.y - self.y)**2 + (self.joueur.x - self.x)**2)
+            print(hypothenuse)
 
-            angle = math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)
-            print(angle)
-            self.x += math.cos(angle) * self.speed
-            self.y += math.sin(angle) * self.speed
+            if hypothenuse > 60 and self.race == 'débile':
+                angle = math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)
+                self.x += math.cos(angle) * self.speed
+                self.y += math.sin(angle) * self.speed
+            elif hypothenuse > 250 and self.race == 'shooter':
+                angle = math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)
+                self.x += math.cos(angle) * self.speed
+                self.y += math.sin(angle) * self.speed
+            self.rect = pygame.Rect(self.x,self.y,self.image.get_width(),self.image.get_height())
         else:
             self.clock += 1
 
@@ -250,6 +308,21 @@ def afficher_mur(maze,loc):
 
 
 
+def afficher_hearth(vie):
+    global hearth,hearth_holder
+    hearth_holder = pygame.transform.scale(pygame.image.load('hearth_holder.png'),(pygame.image.load('hearth_holder.png').get_width()*2,pygame.image.load('hearth_holder.png').get_height()*2))
+    hearth_holder.set_colorkey((255,255,255))
+    if vie > 5:
+        hearth_holder = pygame.transform.scale(hearth_holder,(hearth_holder.get_width() + (vie-5) * hearth.get_width() + 2*(vie-5),hearth_holder.get_height()))
+        hearth_holder.set_colorkey((255,255,255))
+
+
+    fen.blit(hearth_holder,(0,0))
+    for i in range(vie):
+        fen.blit(hearth,(4 + i*hearth.get_width() + i*3,6))
+
+
+
 def spawn_ennemies(visited,maze,loc):
     if not loc in visited:
         for _ in range(random.randint(15,20)):
@@ -261,23 +334,20 @@ spawn = spawner(maze)
 print(spawn)
 
 visited = [spawn]
-
-
 loc = spawn
 
-
-
-
-
 clock = pygame.time.Clock()
+run1 = False
 run = True
 while run:
     clock.tick(60)
 
     afficher_mur(maze,loc)
+    afficher_hearth(kresh.vie)
 
 
     kresh.move()
+    kresh.colision(maze[loc][1])
     if len(maze[loc][1]) > 0:
         for ennemi in maze[loc][1]:
             ennemi.move()
@@ -291,4 +361,21 @@ while run:
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:
                 run = False
+                pygame.quit()
+
+
+while run1:
+    clock.tick(60)
+
+    fen.blit(img_lost,(0,0))
+
+
+    pygame.display.update()
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run1 = False
+            pygame.quit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_ESCAPE:
+                run1 = False
                 pygame.quit()

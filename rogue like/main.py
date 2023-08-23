@@ -147,6 +147,10 @@ class Ennemy:
             self.image_fliped.set_colorkey((255,255,255))
 
         elif self.race == 'shooter':
+            self.bullets = []
+            self.shot_speed = random.randint(3,6)
+            self.attack_timer = random.randint(80,120)
+            self.attack_clock = random.randint(0,80)
             self.image = img_ennemie_shooter
             self.image.set_colorkey((255,255,255))
             self.x = random.randint(500, xfen - 500)
@@ -174,6 +178,37 @@ class Ennemy:
         else:
             fen.blit(self.image_fliped,(self.x,self.y))
 
+    def attack(self):
+
+        if self.race == 'shooter':
+            for bullet in self.bullets:
+                bullet.step()
+                if not 0 < bullet.x < xfen + 10 or not 0 < bullet.y < yfen + 10:
+                    self.bullets.remove(bullet)
+
+            if self.attack_clock > self.attack_timer:
+                self.attack_clock = 0
+
+                dx = math.cos(math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)) * self.shot_speed
+                dy = math.sin(math.atan2(self.joueur.y - self.y, self.joueur.x - self.x)) * self.shot_speed
+                self.bullets.append(Ennemy_shot(self.x,self.y,dx,dy))
+
+            else:
+                self.attack_clock += 1
+
+class Ennemy_shot:
+    def __init__(self,x,y,dx,dy):
+        self.x = x
+        self.y = y
+        self.dx = dx
+        self.dy = dy
+        self.rect = pygame.Rect(self.x-5,self.y-5,5,5)
+
+    def step(self):
+        self.x += self.dx
+        self.y += self.dy
+        self.rect = pygame.Rect(self.x-5,self.y-5,5,5)
+        pygame.draw.circle(fen,(230,40,60),(self.x,self.y),5)
 
 
 def spawner(maze):
@@ -190,17 +225,16 @@ def afficher_mur(maze,loc):
 
     fen.fill((100,100,100))
 
+    if len(maze[loc][1]) > 0:
+        pygame.draw.line(fen,(100,50,50),(xfen,0),(xfen,yfen),30)
+        pygame.draw.line(fen,(100,50,50),(0,0),(0,yfen),30)
+        pygame.draw.line(fen,(100,50,50),(0,0),(xfen,0),30)
+        pygame.draw.line(fen,(100,50,50),(0,yfen),(xfen,yfen),30)
+
     pygame.draw.circle(fen,(200,80,50),(0,0),15)
     pygame.draw.circle(fen,(200,80,50),(xfen,0),15)
     pygame.draw.circle(fen,(200,80,50),(0,yfen),15)
     pygame.draw.circle(fen,(200,80,50),(xfen,yfen),15)
-
-
-    if len(maze[loc][1]) > 0:
-        pygame.draw.line(fen,(200,150,150),(xfen,0),(xfen,yfen),30)
-        pygame.draw.line(fen,(200,150,150),(0,0),(0,yfen),30)
-        pygame.draw.line(fen,(200,150,150),(0,0),(xfen,0),30)
-        pygame.draw.line(fen,(200,150,150),(0,yfen),(xfen,yfen),30)
 
     if not (loc[0]+1,loc[1]) in maze[loc][0]:
         pygame.draw.line(fen,(200,80,50),(xfen,0),(xfen,yfen),30)
@@ -247,6 +281,7 @@ while run:
     if len(maze[loc][1]) > 0:
         for ennemi in maze[loc][1]:
             ennemi.move()
+            ennemi.attack()
 
     pygame.display.update()
     for event in pygame.event.get():

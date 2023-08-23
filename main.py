@@ -1,13 +1,13 @@
 import pygame,math,random,map_maker,maze_vizualiser
 from image_loader import*
 
-xfen,yfen = 800,800
+xfen,yfen = 1600,900
 dimx,dimy = 6,6
 multix,multiy = xfen/dimx , yfen/dimy
 
 maze = maze_vizualiser.show(dimx,dimy)
 pygame.init()
-fen = pygame.display.set_mode((xfen,yfen))#,pygame.FULLSCREEN
+fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)#
 
 
 class Spell:
@@ -15,12 +15,51 @@ class Spell:
         self.name = name
         self.x = x
         self.y = y
-
+        self.rect = pygame.Rect(-2,-2,1,1)
         if self.name == 'lazer_r':
-            lazzer('droite')
+            self.speed = 30
+            self.rect = pygame.Rect(self.x,self.y,20,5)
+        if self.name == 'lazer_d':
+            self.speed = 30
+            self.rect = pygame.Rect(self.x,self.y,5,20)
+        if self.name == 'lazer_u':
+            self.speed = -30
+            self.rect = pygame.Rect(self.x,self.y,5,-20)
+        if self.name == 'lazer_l':
+            self.speed = -30
+            self.rect = pygame.Rect(self.x,self.y,-20,5)
+
+    def step(self):
+        if self.name == 'lazer_r':
+            self.lazer('droite')
+
+        elif self.name == 'lazer_d':
+            self.lazer('bas')
+
+        elif self.name == 'lazer_u':
+            self.lazer('haut')
+
+        elif self.name == 'lazer_l':
+            self.lazer('gauche')
 
     def lazer(self,dirrection):
-        print(dirrection)
+        if dirrection == 'droite':
+            self.x += self.speed
+            self.rect = pygame.Rect(self.x,self.y,20,5)
+            pygame.draw.rect(fen,(255,0,0),self.rect)
+        elif dirrection == 'gauche':
+            self.x += self.speed
+            self.rect = pygame.Rect(self.x,self.y,-20,5)
+            pygame.draw.rect(fen,(255,0,0),self.rect)
+        elif dirrection == 'haut':
+            self.y += self.speed
+            self.rect = pygame.Rect(self.x,self.y,5,-20)
+            pygame.draw.rect(fen,(255,0,0),self.rect)
+        elif dirrection == 'bas':
+            self.y += self.speed
+            self.rect = pygame.Rect(self.x,self.y,5,20)
+            pygame.draw.rect(fen,(255,0,0),self.rect)
+
 
 class Joueur:
     def __init__(self):
@@ -37,41 +76,60 @@ class Joueur:
         self.patience = 10
         self.spells = []
         self.spell_table = {
-                            ('droite','droite','droite'):'lazer_r',
-                            ('gauche','gauche','gauche'):'lazer_l',
-                            ('bas','bas','bas'):'lazer_d',
-                            ('haut','haut','haut'):'lazer_u'
+                            ():None,
+                            ('droite',):'lazer_r',
+                            ('gauche',):'lazer_l',
+                            ('bas',):'lazer_d',
+                            ('haut',):'lazer_u'
                            }
 
     def attack(self):
-        print(self.combo)
-        keys = pygame.key.get_pressed()
-        if self.patience >= 10:
-            if keys[pygame.K_UP]:
-                self.combo += 'haut'
-            elif keys[pygame.K_DOWN]:
-                self.combo += 'bas'
-            elif keys[pygame.K_LEFT]:
-                self.combo += 'gauche'
-            elif keys[pygame.K_RIGHT]:
-                self.combo += 'droite'
-            self.patience = 0
+
+        for u,i in enumerate(self.combo):
+            if i == 'droite':
+                fen.blit(arrow_r,(self.x-50 + 55*u,self.y-45))
+            if i == 'gauche':
+                fen.blit(arrow_l,(self.x-50 + 55*u,self.y-45))
+            if i == 'haut':
+                fen.blit(arrow_u,(self.x-50 + 55*u,self.y-45))
+            if i == 'bas':
+                fen.blit(arrow_d,(self.x-50 + 55*u,self.y-45))
+
+
+        for spell in self.spells:
+            spell.step()
+
+    def add_combo(self,keys):
+        if self.patience >= 20:
+            if len(self.combo) < 3:
+                if keys[pygame.K_UP]:
+                    self.combo.append('haut')
+                elif keys[pygame.K_DOWN]:
+                    self.combo.append('bas')
+                elif keys[pygame.K_LEFT]:
+                    self.combo.append('gauche')
+                elif keys[pygame.K_RIGHT]:
+                    self.combo.append('droite')
+                self.patience = 0
         else:
             self.patience += 1
 
         if keys[pygame.K_SPACE]:
+            self.patience = 0
             if tuple(self.combo) in self.spell_table:
-                self.spells.append(Spell(self.spell_table[tuple(self.combo)]),self.x+self.image.get_width()/2,self.y+self.image.get_height()/2)
+
+                self.spells.append(Spell(self.spell_table[tuple(self.combo)],self.x+self.image.get_width()/2,self.y+self.image.get_height()/2))
             else:
-                print('there is no combo like this')
+                self.combo = []
+                fen.blit(error,(self.x-50 + 50,self.y-50))
+
             self.combo = []
-
-
 
 
     def move(self):
         global loc
         keys = pygame.key.get_pressed()
+        self.add_combo(keys)
 
         if not (keys[pygame.K_z] and keys[pygame.K_d] and keys[pygame.K_s] and keys[pygame.K_q]): #presse toutes les touches = pas bouger
 
@@ -206,8 +264,17 @@ class Ennemy:
         self.attribution_stats()
         self.face=True
 
+    def get_hit(self):
+        for spell in self.joueur.spells:
+            if spell.rect.colliderect(self.rect):
+                self.joueur.spells.remove(spell)
+                self.vie -= 1
+        if self.vie < 1:
+            maze[loc][1].remove(self)
+
     def attribution_stats(self):
         if self.race == 'débile':
+            self.vie = 2
             self.image = img_ennemie
             self.image.set_colorkey((255,255,255))
             self.x = random.randint(160, xfen - 160)
@@ -220,6 +287,7 @@ class Ennemy:
             self.rect = pygame.Rect(self.x,self.y,self.image.get_width(),self.image.get_height())
 
         elif self.race == 'shooter':
+            self.vie = 1
             self.bullets = []
             self.shot_speed = random.randint(3,6)
             self.attack_timer = random.randint(80,120)
@@ -375,6 +443,7 @@ while run:
         for ennemi in maze[loc][1]:
             ennemi.move()
             ennemi.attack()
+            ennemi.get_hit()
 
     pygame.display.update()
     for event in pygame.event.get():

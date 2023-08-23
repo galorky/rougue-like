@@ -147,12 +147,13 @@ class Joueur:
         for ennemie in ennemies:
             if ennemie.rect.colliderect(self.rect):
                 if self.counter_imunite >= self.imunite:
-                    self.vie += 1
+                    self.vie -= 1
                     self.counter_imunite = 0
 
             if ennemie.race == 'shooter':
                 for bullet in ennemie.bullets:
                     if bullet.rect.colliderect(self.rect):
+                        ennemie.bullets.remove(bullet)
                         if self.counter_imunite >= self.imunite:
                             self.vie -= 1
                             self.counter_imunite = 0

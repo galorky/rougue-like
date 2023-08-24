@@ -22,6 +22,13 @@ hearth_holder = pygame.transform.scale(pygame.image.load('images/hearth_holder.p
 hearth_holder.set_colorkey((255,255,255))
 
 
+molo = pygame.transform.scale(pygame.image.load('images/molo.png'),(pygame.image.load('images/molo.png').get_width()*2,pygame.image.load('images/molo.png').get_height()*2))
+molo.set_colorkey((255,255,255))
+
+fire = pygame.transform.scale(pygame.image.load('images/fire.png'),(pygame.image.load('images/fire.png').get_width()*3,pygame.image.load('images/fire.png').get_height()*3))
+fire.set_colorkey((255,255,255))
+
+
 arrow_r = pygame.transform.scale(pygame.image.load('images/arrow_r.png'),(pygame.image.load('images/arrow_r.png').get_width()*2,pygame.image.load('images/arrow_r.png').get_height()*2))
 arrow_r.set_colorkey((255,255,255))
 
@@ -33,3 +40,6 @@ arrow_u.set_colorkey((255,255,255))
 
 arrow_l = pygame.transform.scale(pygame.image.load('images/arrow_l.png'),(pygame.image.load('images/arrow_l.png').get_width()*2,pygame.image.load('images/arrow_l.png').get_height()*2))
 arrow_l.set_colorkey((255,255,255))
+
+error = pygame.transform.scale(pygame.image.load('images/error.png'),(pygame.image.load('images/error.png').get_width()*2,pygame.image.load('images/error.png').get_height()*2))
+error.set_colorkey((255,255,255))

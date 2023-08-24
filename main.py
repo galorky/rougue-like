@@ -12,6 +12,8 @@ fen = pygame.display.set_mode((xfen,yfen),pygame.FULLSCREEN)#
 
 class Spell:
     def __init__(self,name,x,y):
+        global kresh
+        self.joueur = kresh
         self.name = name
         self.x = x
         self.y = y
@@ -19,15 +21,31 @@ class Spell:
         if self.name == 'lazer_r':
             self.speed = 30
             self.rect = pygame.Rect(self.x,self.y,20,5)
-        if self.name == 'lazer_d':
+        elif self.name == 'lazer_d':
             self.speed = 30
             self.rect = pygame.Rect(self.x,self.y,5,20)
-        if self.name == 'lazer_u':
+        elif self.name == 'lazer_u':
             self.speed = -30
             self.rect = pygame.Rect(self.x,self.y,5,-20)
-        if self.name == 'lazer_l':
+        elif self.name == 'lazer_l':
             self.speed = -30
             self.rect = pygame.Rect(self.x,self.y,-20,5)
+
+        elif self.name == 'molo_r':
+            self.speed = 25
+            self.speed_y = -30
+            self.temp_vie = 60 * 3
+        elif self.name == 'molo_l':
+            self.speed = 25
+            self.speed_y = -30
+            self.temp_vie = 60 * 3
+        elif self.name == 'molo_u':
+            self.speed_y = -25
+            self.temp_vie = 60 * 3
+        elif self.name == 'molo_d':
+            self.speed_y = 25
+            self.temp_vie = 60 * 3
+
 
     def step(self):
         if self.name == 'lazer_r':
@@ -41,6 +59,71 @@ class Spell:
 
         elif self.name == 'lazer_l':
             self.lazer('gauche')
+
+        elif self.name == 'molo_r':
+            self.molo('droite')
+        elif self.name == 'molo_l':
+            self.molo('gauche')
+        elif self.name == 'molo_d':
+            self.molo('bas')
+        elif self.name == 'molo_u':
+            self.molo('haut')
+
+    def molo(self,dirrection):
+        if dirrection == 'droite':
+            if self.speed_y < 25:
+                self.x += self.speed
+                self.y += self.speed_y
+                self.speed_y += 3
+
+                fen.blit(molo,(self.x,self.y))
+            else:
+                self.temp_vie -= 1
+                if self.temp_vie > 0:
+                    fen.blit(fire,(self.x,self.y))
+                    self.rect = pygame.Rect(self.x,self.y,fire.get_width(),fire.get_height())
+                else:
+                    self.joueur.spells.remove(self)
+        if dirrection == 'gauche':
+            if self.speed_y < 25:
+                self.x -= self.speed
+                self.y += self.speed_y
+                self.speed_y += 2.7
+
+                fen.blit(molo,(self.x,self.y))
+            else:
+                self.temp_vie -= 1
+                if self.temp_vie > 0:
+                    fen.blit(fire,(self.x,self.y))
+                    self.rect = pygame.Rect(self.x,self.y,fire.get_width(),fire.get_height())
+                else:
+                    self.joueur.spells.remove(self)
+        if dirrection == 'haut':
+            if self.speed_y < 0:
+                self.y += self.speed_y
+                self.speed_y += 0.7
+
+                fen.blit(molo,(self.x,self.y))
+            else:
+                self.temp_vie -= 1
+                if self.temp_vie > 0:
+                    fen.blit(fire,(self.x,self.y))
+                    self.rect = pygame.Rect(self.x,self.y,fire.get_width(),fire.get_height())
+                else:
+                    self.joueur.spells.remove(self)
+        if dirrection == 'bas':
+            if self.speed_y > 0:
+                self.y += self.speed_y
+                self.speed_y -= 0.7
+
+                fen.blit(molo,(self.x,self.y))
+            else:
+                self.temp_vie -= 1
+                if self.temp_vie > 0:
+                    fen.blit(fire,(self.x,self.y))
+                    self.rect = pygame.Rect(self.x,self.y,fire.get_width(),fire.get_height())
+                else:
+                    self.joueur.spells.remove(self)
 
     def lazer(self,dirrection):
         if dirrection == 'droite':
@@ -75,12 +158,17 @@ class Joueur:
         self.combo = []
         self.patience = 10
         self.spells = []
+        self.joueur = self
         self.spell_table = {
                             ():None,
                             ('droite',):'lazer_r',
                             ('gauche',):'lazer_l',
                             ('bas',):'lazer_d',
-                            ('haut',):'lazer_u'
+                            ('haut',):'lazer_u',
+                            ('droite','droite','droite'):'molo_r',
+                            ('gauche','gauche','gauche'):'molo_l',
+                            ('haut','haut','haut'):'molo_u',
+                            ('bas','bas','bas'):'molo_d'
                            }
 
     def attack(self):
@@ -100,7 +188,7 @@ class Joueur:
             spell.step()
 
     def add_combo(self,keys):
-        if self.patience >= 20:
+        if self.patience >= 15:
             if len(self.combo) < 3:
                 if keys[pygame.K_UP]:
                     self.combo.append('haut')
@@ -184,6 +272,7 @@ class Joueur:
                 self.x -= self.dx
             elif self.x > xfen - img_kresh.get_width() and (loc[0]+1,loc[1]) in maze[loc][0]:
                 loc = (loc[0]+1,loc[1])
+                self.spells = []
                 self.x = 20
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
@@ -194,6 +283,7 @@ class Joueur:
                 self.y -= self.dy
             elif self.y > yfen - img_kresh.get_height() and (loc[0],loc[1]+1) in maze[loc][0]:
                 loc = (loc[0],loc[1]+1)
+                self.spells = []
                 self.y = 20
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
@@ -204,6 +294,7 @@ class Joueur:
                 self.y -= self.dy
             elif self.y < 0 and (loc[0],loc[1]-1) in maze[loc][0]:
                 loc = (loc[0],loc[1]-1)
+                self.spells = []
                 self.y = yfen - 20 - img_kresh.get_height()
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
@@ -214,7 +305,7 @@ class Joueur:
                 self.x -= self.dx
             elif self.x < 0 and (loc[0]-1,loc[1]) in maze[loc][0]:
                 loc = (loc[0]-1,loc[1])
-
+                self.spells = []
                 self.x = xfen - 20 - img_kresh.get_width()
                 spawn_ennemies(visited,maze,loc)
                 visited.append(loc)
@@ -267,7 +358,10 @@ class Ennemy:
     def get_hit(self):
         for spell in self.joueur.spells:
             if spell.rect.colliderect(self.rect):
-                self.joueur.spells.remove(spell)
+                if spell.name[:-2] == 'molo':
+                    pass
+                else:
+                    self.joueur.spells.remove(spell)
                 self.vie -= 1
         if self.vie < 1:
             maze[loc][1].remove(self)
